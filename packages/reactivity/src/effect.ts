@@ -1,12 +1,34 @@
 let activeEffect;
 
 class ReactiveEffect{
-    constructor(public fn){
+    private _fn : any
+    deps = []
+    active = true
+    onStop?:()=>void
+    public scheduler : Function | undefined
+    constructor(fn,scheduler? :Function){
+        this._fn = fn
+        this.scheduler = scheduler
     }
     run(){
         activeEffect = this
-        return this.fn()
+        return this._fn()
     }
+    stop(){
+        if(this.active){
+            cleanupEffect(this)
+            if(this.onStop){
+                this.onStop()
+            }
+            this.active = false
+        }
+    }
+    
+}
+function cleanupEffect(effect){
+    effect.deps.forEach((dep:any) =>{
+        dep.delete(effect)
+    })
 }
 const targetMap = new Map()
 export function track(target,key){
@@ -23,17 +45,32 @@ export function track(target,key){
          depsMap.set(key,dep)
     }
     dep.add(activeEffect)
+    // if(!activeEffect)return 
+    activeEffect.deps.push(dep)
 }
 export function trigger(target, key){
     let depsMap = targetMap.get(target)
     let dep = depsMap.get(key)
     for(const effect of dep){
-        effect.run()
+        if(effect.scheduler){
+            effect.scheduler()
+        }else{
+            effect.run()
+        }
     }
 } 
-export function effect(fn){
+export function effect(fn,options:any = {}){
+    const scheduler = options.scheduler
     // fn
-    const _effect = new ReactiveEffect(fn)
-
+    const _effect = new ReactiveEffect(fn,scheduler)
+    _effect.onStop = options.onStop
     _effect.run()
+    const runner:any = _effect.run.bind(_effect)
+
+    runner.effect = _effect
+    return runner
+} 
+
+export function stop(runner){
+    runner.effect.stop()
 }
