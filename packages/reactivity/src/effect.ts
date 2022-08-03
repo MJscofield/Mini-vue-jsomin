@@ -1,3 +1,5 @@
+import { extend } from "../../shared/index";
+
 let activeEffect;
 
 class ReactiveEffect{
@@ -45,7 +47,7 @@ export function track(target,key){
          depsMap.set(key,dep)
     }
     dep.add(activeEffect)
-    // if(!activeEffect)return 
+    if(!activeEffect)return 
     activeEffect.deps.push(dep)
 }
 export function trigger(target, key){
@@ -63,7 +65,9 @@ export function effect(fn,options:any = {}){
     const scheduler = options.scheduler
     // fn
     const _effect = new ReactiveEffect(fn,scheduler)
-    _effect.onStop = options.onStop
+    // _effect.onStop = options.onStop
+    // options
+   extend(_effect,options)
     _effect.run()
     const runner:any = _effect.run.bind(_effect)
 
