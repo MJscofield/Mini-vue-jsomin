@@ -1,4 +1,5 @@
-import { extend } from "./src";
+import { extend,isObject } from "./src";
 export{
-    extend
+    extend,
+    isObject
 }
