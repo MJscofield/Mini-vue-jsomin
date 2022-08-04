@@ -1,7 +1,7 @@
 import { extend } from "../../shared/index";
 
 let activeEffect;
-
+let shouldTrack;
 class ReactiveEffect{
     private _fn : any
     deps = []
@@ -13,8 +13,16 @@ class ReactiveEffect{
         this.scheduler = scheduler
     }
     run(){
+        if(!this.active){
+            return this._fn()
+        }
         activeEffect = this
-        return this._fn()
+        shouldTrack = true
+        const result = this._fn()
+        
+        // reset
+        shouldTrack = false
+        return result
     }
     stop(){
         if(this.active){
@@ -33,7 +41,9 @@ function cleanupEffect(effect){
     })
 }
 const targetMap = new Map()
+// 收集依赖
 export function track(target,key){
+    if(!isTracking()) return 
     let depsMap = targetMap.get(target)
     if(!depsMap){
          depsMap = new Map()
@@ -46,9 +56,12 @@ export function track(target,key){
          dep = new Set()
          depsMap.set(key,dep)
     }
+    
     dep.add(activeEffect)
-    if(!activeEffect)return 
     activeEffect.deps.push(dep)
+}
+function isTracking(){
+    return shouldTrack && activeEffect !== undefined
 }
 export function trigger(target, key){
     let depsMap = targetMap.get(target)
