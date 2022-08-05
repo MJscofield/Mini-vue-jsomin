@@ -8,7 +8,6 @@ import { reactive, ReactiveFlags, readonly, shallowReadonly } from "./reactive";
 // 封装Getter函数
 function CreateGetter(isReadonly = false, shallow = false){
     return function get(target,key){
-        console.log(key)
         if(key=== ReactiveFlags.IS_REACTIVE){
             return !isReadonly
         }else if(key=== ReactiveFlags.IS_READONLY){
